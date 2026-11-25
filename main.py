@@ -1,123 +1,70 @@
-# Inventory Control System
-# Data is stored in memory while the program is running.
+"""Terminal interface. Run with python main.py."""
+from inventory import register_product, record_entry, record_issue
+from storage import DEFAULT_PATH, load_inventory, save_inventory
 
-products = {}
+MENU = """
+--- INVENTORY CONTROL ---
+1 - Register a product
+2 - Record incoming stock
+3 - Record outgoing stock
+4 - View inventory
+5 - Exit"""
 
-print("Welcome to the inventory control system!")
 
-access = input(
-    "Would you like to access the system? (Y/N): "
-).strip().upper()
+def show_inventory(products):
+    if not products:
+        print("No products registered.")
+        return
+    print("\n--- CURRENT INVENTORY ---")
+    for name, quantity in sorted(products.items()):
+        print(f"- {name}: {quantity} unit(s)")
 
-if access == "Y":
-    option = ""
 
-    while option != "5":
-        print("\n--- INVENTORY CONTROL ---")
-        print("1 - Register a product")
-        print("2 - Record incoming stock")
-        print("3 - Record outgoing stock")
-        print("4 - View inventory")
-        print("5 - Exit")
+def main(path=DEFAULT_PATH):
+    print("Welcome to the inventory control system!")
+    try:
+        products = load_inventory(path)
+    except (OSError, ValueError) as error:
+        print(f"Cannot load inventory: {error}")
+        print("Your existing file has not been changed. Check it before restarting.")
+        return 1
 
-        option = input("Choose an option: ").strip()
-
-        # Register a product with its initial stock quantity.
-        if option == "1":
-            name = input("Enter the product name: ").strip().lower()
-
-            if name == "":
-                print("The product name cannot be empty.")
-
-            elif name in products:
-                print("This product is already registered.")
-
+    try:
+        if input("Would you like to access the system? (Y/N): ").strip().upper() != "Y":
+            print("Access canceled.")
+            return 0
+        while True:
+            print(MENU)
+            option = input("Choose an option: ").strip()
+            if option == "5":
+                print("System closed. Goodbye!")
+                return 0
+            if option == "4":
+                show_inventory(products)
+                continue
+            operations = {"1": register_product, "2": record_entry, "3": record_issue}
+            if option not in operations:
+                print("Invalid option! Choose a number from 1 to 5.")
+                continue
+            name = input("Enter the product name: ")
+            try:
+                quantity = int(input("Enter the quantity: "))
+                # Work on a copy: a failed save must not change the active stock.
+                updated = products.copy()
+                operations[option](updated, name, quantity)
+                save_inventory(updated, path)
+            except ValueError as error:
+                print(f"Invalid operation: {error}")
+            except OSError as error:
+                print(f"Could not save inventory: {error}. Operation canceled.")
             else:
-                try:
-                    quantity = int(
-                        input("Enter the initial stock quantity: ")
-                    )
+                products = updated
+                print("Operation saved successfully.")
+                show_inventory(products)
+    except (EOFError, KeyboardInterrupt):
+        print("\nSystem closed. Completed operations are already saved.")
+        return 0
 
-                    if quantity < 0:
-                        print("The stock quantity cannot be negative.")
 
-                    else:
-                        products[name] = quantity
-                        print(f"Product '{name}' registered successfully!")
-                        print(f"Initial stock: {quantity} unit(s).")
-
-                except ValueError:
-                    print("Invalid quantity. Enter a whole number.")
-
-        # Add units to an existing product.
-        elif option == "2":
-            name = input("Enter the product name: ").strip().lower()
-
-            if name not in products:
-                print("Product not found. Register it first.")
-
-            else:
-                try:
-                    quantity = int(
-                        input("Enter the quantity to add: ")
-                    )
-
-                    if quantity <= 0:
-                        print("The quantity must be greater than zero.")
-
-                    else:
-                        products[name] += quantity
-                        print(f"Added {quantity} unit(s) to '{name}'.")
-                        print(f"Current stock: {products[name]} unit(s).")
-
-                except ValueError:
-                    print("Invalid quantity. Enter a whole number.")
-
-        # Remove units without allowing negative stock.
-        elif option == "3":
-            name = input("Enter the product name: ").strip().lower()
-
-            if name not in products:
-                print("Product not found.")
-
-            else:
-                try:
-                    quantity = int(
-                        input("Enter the quantity to remove: ")
-                    )
-
-                    if quantity <= 0:
-                        print("The quantity must be greater than zero.")
-
-                    elif quantity > products[name]:
-                        print("Insufficient stock.")
-                        print(f"Available stock: {products[name]} unit(s).")
-
-                    else:
-                        products[name] -= quantity
-                        print(f"Removed {quantity} unit(s) from '{name}'.")
-                        print(f"Current stock: {products[name]} unit(s).")
-
-                except ValueError:
-                    print("Invalid quantity. Enter a whole number.")
-
-        # Display all products and their stock quantities.
-        elif option == "4":
-            if products:
-                print("\n--- CURRENT INVENTORY ---")
-
-                for name, quantity in products.items():
-                    print(f"- {name}: {quantity} unit(s)")
-
-            else:
-                print("No products registered.")
-
-        # Exit the system.
-        elif option == "5":
-            print("System closed. Goodbye!")
-
-        else:
-            print("Invalid option! Choose a number from 1 to 5.")
-
-else:
-    print("Access canceled.")
+if __name__ == "__main__":
+    raise SystemExit(main())

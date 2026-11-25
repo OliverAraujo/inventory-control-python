@@ -1,148 +1,69 @@
-# 📦 Inventory Control with Python
+# Inventory Control with Python
 
-A terminal-based inventory management application built as a learning project to practice Python fundamentals.
+A terminal application for product registration, incoming and outgoing stock, and stock lookup. Learning project using Python 3.10+ and the standard library.
 
-The application allows users to register products with an initial stock quantity, record incoming and outgoing stock, and view the current inventory.
-
-## Features
-
-- Register products with an initial stock quantity.
-- Prevent empty or duplicate product names.
-- Record incoming stock.
-- Record outgoing stock.
-- Prevent withdrawals exceeding available stock.
-- Display all products and their current quantities.
-- Handle invalid menu options and quantity inputs.
-
-Product names are converted to lowercase and trimmed of leading and trailing spaces. For example, `Mouse` and `mouse` refer to the same product.
-
-## Technologies
-
-- Python 3
-- Git and GitHub for version control
-
-No external Python libraries are required.
-
-## Getting Started
-
-### 1. Clone the repository
+## Run
 
 ```bash
 git clone https://github.com/OliverAraujo/inventory-control-python.git
-```
-
-### 2. Open the project folder
-
-```bash
 cd inventory-control-python
-```
-
-### 3. Run the application
-
-```bash
 python main.py
 ```
 
-On Windows, you can also use:
+On Windows you can use `py main.py`. Enter Y to open the menu (this is confirmation, not authentication).
+
+1. Register a product with an initial quantity.
+2. Record incoming stock.
+3. Record outgoing stock.
+4. View inventory.
+5. Exit.
+
+## Example to reproduce
+
+Register mouse with 10 units, receive 5, and remove 3. Option 4 shows `mouse: 12 unit(s)`. Close and restart the application: the 12 units are still there.
+
+## Design decisions
+
+- A dictionary maps each product name to its stock quantity for direct lookup.
+- Names are trimmed and converted to lowercase, so Mouse and mouse refer to the same product.
+- Business rules live in `inventory.py`, separately from terminal input.
+- JSON is a small, readable first step toward persistence without a database.
+- Each successful operation is saved automatically to `data/inventory.json`.
+- A temporary file followed by replacement protects the previous file from partial writes.
+- The interface updates its in-memory stock only after saving succeeds.
+- Invalid or unreadable stored data stops startup with an error; it is not silently erased.
+
+## Rules
+
+Names cannot be blank or duplicated. Initial quantities must be nonnegative integers. Movements must be positive integers. Withdrawals cannot exceed stock. Invalid operations do not change inventory.
+
+## Structure
+
+- `main.py`: terminal menu and user messages.
+- `inventory.py`: registration and movement rules.
+- `storage.py`: JSON validation, loading and saving.
+- `tests/test_inventory.py`: rules, persistence, failed writes, and terminal workflow.
+
+## Tests
 
 ```bash
-py main.py
+python -m unittest discover -s tests -v
 ```
 
-On systems where Python 3 uses a separate command:
+GitHub Actions runs the tests on Python 3.10 and 3.12.
 
-```bash
-python3 main.py
-```
+## Limitations
 
-## How to Use
+Single-user, single-process application. No database, authentication, stock movement history or web API yet. Do not run two instances against the same JSON file. Keep backups of your data. Files under data/ are excluded from Git.
 
-When prompted, enter `Y` to access the system.
+## Next steps
 
-```text
---- INVENTORY CONTROL ---
-1 - Register a product
-2 - Record incoming stock
-3 - Record outgoing stock
-4 - View inventory
-5 - Exit
-```
+- Product identifiers and movement history.
+- SQLite persistence.
+- A web API and interface after practicing the fundamentals.
 
-| Option | Description |
-|--------|-------------|
-| 1 | Register a product and its initial quantity |
-| 2 | Add units to a registered product |
-| 3 | Remove units from a registered product |
-| 4 | Display products and stock quantities |
-| 5 | Close the application |
+## Learning notes
 
-The menu reappears after each operation so you can perform another action.
+The key concepts are functions, dictionaries, loops, conditionals, exceptions, file operations, JSON and automated tests. Be prepared to explain why each validation exists and how failed saves are handled.
 
-### Example Workflow
-
-1. Register `mouse` with an initial quantity of `10`.
-2. Add `5` units using option `2`.
-3. Remove `3` units using option `3`.
-4. Select option `4` to view the result:
-
-```text
---- CURRENT INVENTORY ---
-- mouse: 12 unit(s)
-```
-
-## Validation Rules
-
-- Product names cannot be empty.
-- Products cannot be registered more than once under the same normalized name.
-- Initial stock must be a whole number greater than or equal to zero.
-- Incoming and outgoing quantities must be positive whole numbers.
-- Outgoing quantities cannot exceed available stock.
-- Invalid quantity inputs display an error message and return to the menu.
-
-## Data Storage
-
-Products are stored in a Python dictionary, where each product name is associated with its quantity:
-
-```python
-products = {
-    "mouse": 12,
-    "keyboard": 5
-}
-```
-
-**Data is stored only in memory and is lost when the application closes.**
-
-This version does not use a database or save data to files. The initial Y/N prompt is a confirmation to enter the program, not a login or authentication system.
-
-## Learning Goals
-
-This project practices:
-
-- Variables and dictionaries.
-- User input and output with `input()` and `print()`.
-- Conditional statements with `if`, `elif`, and `else`.
-- Loops with `while` and `for`.
-- Dictionary operations and iteration with `.items()`.
-- String methods such as `.strip()`, `.lower()`, and `.upper()`.
-- Integer conversion with `int()`.
-- Error handling with `try` and `except ValueError`.
-- String formatting with f-strings.
-- Input validation and basic inventory rules.
-
-## Future Improvements
-
-- [ ] Organize the code into reusable functions.
-- [ ] Add automated tests.
-- [ ] Integrate a database to persist inventory data.
-- [ ] Create a graphical user interface.
-- [ ] Add unique product identifiers.
-- [ ] Record stock movement history.
-
-## Author
-
-**Oliver Araújo**
-
-Graduate in Systems Analysis and Development, currently learning Python with a focus on backend development.
-
-- [GitHub](https://github.com/OliverAraujo)
-- [Portfolio](https://oliveraraujo.github.io/portifolio/)
+[Portfolio](https://oliveraraujo.github.io/portifolio/) · [GitHub](https://github.com/OliverAraujo)
